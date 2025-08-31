@@ -1,4 +1,4 @@
-  name: Build Blurr Android App
+ name: Build Blurr Android App
 
   on:
     push:
@@ -24,7 +24,6 @@
         uses: android-actions/setup-android@v3
         env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: true
-          SKIP_JDK_VERSION_CHECK: true
 
       - name: Donner la permission d'exécution à gradlew
         run: chmod +x gradlew
