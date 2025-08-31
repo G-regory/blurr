@@ -29,6 +29,49 @@ jobs:
       env:
         GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
 
+    - name: Créer les fichiers Kotlin manquants
+      run: |
+        # Créer le dossier presentation s'il n'existe pas
+        mkdir -p app/src/main/java/com/gregory/blurr/presentation
+        
+        # Créer le fichier AiState.kt
+        cat > app/src/main/java/com/gregory/blurr/presentation/AiState.kt << 'EOF'
+        package com.gregory.blurr.presentation
+
+        /**
+         * Represents the different states of the AI assistant
+         */
+        sealed class AiState {
+            object Idle : AiState()
+            object Listening : AiState()
+            object Processing : AiState()
+            object Speaking : AiState()
+            object Error : AiState()
+            data class Working(val task: String) : AiState()
+        }
+        EOF
+        
+        # Créer le fichier ChatState.kt s'il n'existe pas
+        if [ ! -f app/src/main/java/com/gregory/blurr/presentation/ChatState.kt ]; then
+        cat > app/src/main/java/com/gregory/blurr/presentation/ChatState.kt << 'EOF'
+        package com.gregory.blurr.presentation
+
+        /**
+         * Represents the state of the chat interface
+         */
+        data class ChatState(
+            val messages: List<String> = emptyList(),
+            val currentMessage: String = "",
+            val aiState: AiState = AiState.Idle,
+            val isLoading: Boolean = false,
+            val error: String? = null
+        ) {
+            val canSendMessage: Boolean
+                get() = currentMessage.isNotBlank() && aiState != AiState.Processing
+        }
+        EOF
+        fi
+
     - name: Cache Gradle
       uses: actions/cache@v3
       with:
