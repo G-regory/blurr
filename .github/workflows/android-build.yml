@@ -1,4 +1,4 @@
- name: Build Blurr Android App
+  name: Build Blurr Android App
 
   on:
     push:
