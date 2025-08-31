@@ -1,9 +1,9 @@
-name: Build Blurr Android App
+  name: Build Blurr Android App
 
   on:
     push:
-      branches: [ "main" ] # ou "master" selon le nom de la branche principale
-    workflow_dispatch: # Permet de lancer manuellement la compilation
+      branches: [ "main" ]
+    workflow_dispatch:
 
   jobs:
     build:
@@ -13,23 +13,23 @@ name: Build Blurr Android App
       - name: Checkout du code
         uses: actions/checkout@v4
 
-      - name: Configuration de Java (JDK 17)
+      - name: Configuration de Java (JDK 11)
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '11'
           distribution: 'temurin'
           cache: gradle
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
       - name: Donner la permission d'exécution à gradlew
         run: chmod +x gradlew
 
       - name: Créer le fichier local.properties
         run: |
-          touch local.properties
-          echo "sdk.dir=$ANDROID_SDK_ROOT" >> local.properties
+          echo "sdk.dir=$ANDROID_HOME" >> local.properties
           echo "GEMINI_API_KEYS=${{ secrets.GEMINI_API_KEYS }}" >> local.properties
-        env:
-          GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
 
       - name: Lancer la compilation avec Gradle
         run: ./gradlew assembleDebug
