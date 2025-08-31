@@ -1,43 +1,59 @@
-  name: Build Blurr Android App
+name: Build Blurr Android App
 
-  on:
-    push:
-      branches: [ "main" ]
-    workflow_dispatch:
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
 
-  jobs:
-    build:
-      runs-on: ubuntu-latest
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-      steps:
-      - name: Checkout du code
-        uses: actions/checkout@v4
+    steps:
+    - name: Checkout du code
+      uses: actions/checkout@v4
 
-      - name: Configuration de Java (JDK 17)
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: gradle
+    - name: Configuration de Java (JDK 17)
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-        env:
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    - name: Donner la permission d'exécution à gradlew
+      run: chmod +x gradlew
 
-      - name: Donner la permission d'exécution à gradlew
-        run: chmod +x gradlew
+    - name: Créer le fichier local.properties avec la clé API
+      run: |
+        echo "sdk.dir=$ANDROID_HOME" > local.properties
+        echo "GEMINI_API_KEYS=${{ secrets.GEMINI_API_KEYS }}" >> local.properties
+      env:
+        GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
 
-      - name: Créer le fichier local.properties
-        run: |
-          echo "sdk.dir=$ANDROID_HOME" >> local.properties
-          echo "GEMINI_API_KEYS=${{ secrets.GEMINI_API_KEYS }}" >> local.properties
+    - name: Cache Gradle
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
 
-      - name: Lancer la compilation avec Gradle
-        run: ./gradlew assembleDebug --stacktrace
+    - name: Nettoyer et compiler l'application
+      run: ./gradlew clean assembleDebug --stacktrace --info
 
-      - name: Téléverser l'APK en tant qu'artefact
-        uses: actions/upload-artifact@v4
-        with:
-          name: blurr-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+    - name: Vérifier si l'APK a été créé
+      run: |
+        if [ -f app/build/outputs/apk/debug/app-debug.apk ]; then
+          echo "APK créé avec succès !"
+          ls -la app/build/outputs/apk/debug/
+        else
+          echo "Erreur: APK non trouvé"
+          find . -name "*.apk" -type f
+        fi
+
+    - name: Téléverser l'APK en tant qu'artefact
+      uses: actions/upload-artifact@v4
+      with:
+        name: blurr-debug-apk
+        path: app/build/outputs/apk/debug/app-debug.apk
